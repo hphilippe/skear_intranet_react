@@ -1,50 +1,78 @@
 import gql from 'graphql-tag';
 
-export const GET_GROUP = gql`
-query Groupses ($email : String!) {
-  groupses(where: {userses_some: {email: $email}}) {
-    id
-    title
-    banner {
+export const GET_POST_DASHBOARD = gql`
+  query postsOnlySix {
+    posts(orderBy: updatedAt_DESC, first: 6) {
       id
-      handle
+      title
+      createdAt
+      updatedAt
+      url
+      cover {
+        handle
+      }
+      users {
+        id
+        username
+      }
+      categories {
+        id
+        title
+      }
+    },
+    postsConnection {
+      aggregate {
+        count
+      }
     }
-    dateStart
-    dateEnd
   }
-  postsConnection {
-    aggregate {
-      count
-    }
-  }
-}
 `;
 
-export const CREATE_GROUP = gql`
-  mutation CreateGroupses($title: String!, $dateend: DateTime!, $datestart: DateTime!, $idbanner: ID!, $email: String!) {
-    createGroups(data: {
-      title: $title
-      dateEnd: $dateend
-      dateStart: $datestart
-      banner: {
-        connect: {
-          id : $idbanner
-        }
+export const GET_CONFIGURATIONS = gql`
+  query configurations {
+    configurationses{
+      id
+      skearcloud
+      skeargit
+      skearnas
+      skearDigital
+      skearGames
+      skearCloudStatus
+      skearGitStatus
+      meistertask
+      meistertaskStatus
+      skearnasStatus
+    },
+    postsConnection {
+      aggregate {
+        count
       }
-      userses: {
+    }
+  }
+`;
+
+export const CREATE_POST= gql`
+  mutation createPost($title: String!, $content : RichTextAST!, $iduser: ID!) {
+    createPost(data: {
+      title: $title
+      status: PUBLISHED
+      content: $content
+      users: {
         connect: {
-          email: $email
+          id: $iduser
         }
       }
     }) {
       id
-      title
+      users {
+        name
+      }
     }
   }
 `;
 
-export const UPDATE_GROUP = gql`
-  mutation UpdateGroups($idgroup: ID!, $title: String!, $dateend: DateTime!, $datestart: DateTime!, $idbanner: ID!){
+export const UPDATE_POST = gql`
+  mutation UpdateGroups($idgroup: ID!, $title: String!, $dateend: DateTime!, $datestart: DateTime!, $idbanner: ID!, $status: GroupStatus!){
     updateGroups(
       where: {
         id: $idgroup
@@ -53,6 +81,7 @@ export const UPDATE_GROUP = gql`
         title: $title
         dateEnd: $dateend
         dateStart: $datestart
+        groupstatus: $status
         banner: {
           connect: {
             id : $idbanner
@@ -65,9 +94,9 @@ export const UPDATE_GROUP = gql`
   }
 `;
 
-export const DELETE_GROUP = gql`
-  mutation DeleteGroups($id: ID!) {
-    deleteGroups(
+export const DELETE_POST = gql`
+  mutation deletePost($id: ID!) {
+    deletePost(
       where: {
         id: $id
       }

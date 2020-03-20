@@ -1,38 +1,43 @@
 import React from "react";
 import { Query, ApolloConsumer } from 'react-apollo';
 // Ant design
-import { Layout, Row, Col, Card, Icon, Modal } from 'antd';
+import { Layout, Row, Col, Card } from 'antd';
 // components loading error
 import Loading from '../../../components/Loading';
 import ErrorMessage from '../../../components/Error';
+import Configurations from './Configurations';
+import Todo from './Todo';
 // CSS
 import '../style.css';
 import './style.css';
-// import app module
-import CreateGroup from './createGroup.js';
-import EditGroup from './editGroup';
+// Import module
+//import CreateGroup from './createGroup.js';
+//import EditGroup from './editGroup';
 // import graphql query
-import { GET_GROUP, DELETE_GROUP } from './mutations';
+import { GET_POST_DASHBOARD } from './mutations';
 // moment
 import Moment from 'react-moment';
 import 'moment/locale/fr';
+// image
+import noImage from '../../../assets/img/noimage.png';
 
 // Constante
 const { Content } = Layout;
 const { Meta } = Card;
-const userEmail = localStorage.getItem("email");
+//const Panel = Collapse.Panel;
+//const userEmail = localStorage.getItem("email");
 
 // Redirect group select, custom url
 function GroupSelect(item) {
   localStorage.setItem("groupSelectId", item.id);
   var titleUnderscore = item.title.split(" ").join("_");
-  window.location.pathname = '/dashboard/' + item.id + '/' + titleUnderscore
+  window.location.pathname = '/post/' + item.id + '/' + titleUnderscore
 }
 
 // await graphql delete then refetch
-async function removeGroupAsync(client, idItem, refetch) {
+/*async function removeGroupAsync(client, idItem, refetch) {
   const { data, error } = await client.mutate({
-    mutation: DELETE_GROUP,
+    mutation: DELETE_POST,
     variables: { id: idItem }
   })
   if (data) refetch()
@@ -50,7 +55,7 @@ function showDeleteConfirm(client, id, refetch) {
     },
     onCancel() { },
   });
-}
+}*/
 
 // CLASS APP
 class App extends React.Component {
@@ -61,8 +66,7 @@ class App extends React.Component {
       <ApolloConsumer>
         {client => (
           <Query
-            query={GET_GROUP}
-            variables={{ email: userEmail }}
+            query={GET_POST_DASHBOARD}
             notifyOnNetworkStatusChange={true}
           >
             {({ data, loading, error, refetch }) => {
@@ -75,53 +79,67 @@ class App extends React.Component {
                 return <ErrorMessage error={error} />;
               }
 
-              // STORE INFORMATION OF GROUP
-              localStorage.setItem("GET_GROUP", data.groupses);
-
               // MAP ALL ITEM
-              const ColList = data.groupses.map(({ ...group }) => {
-                const areImages = group.banner
+              const ColList = data.posts.map(({ ...group }) => {
+              const areImages = group.url
                 return (
-                  <Col lg={6} md={12} xs={24} className="gutter-row" key={group.id}>
+                  <Col lg={6} md={12} xs={24} className={"gutter-row"} key={group.id} >
                     <Card
                       hoverable
-                      style={{ maxWidth: '250px', textAlign: 'center', marginLeft: 'auto', marginRight: 'auto' }}
-                      actions={[
-                        <EditGroup client={client} group={group} refetch={refetch} />,
-                        <Icon type="delete" 
-                          onClick={() => {
-                            showDeleteConfirm(client, group.id, refetch);
-                          }}
-                        />
-                      ]}
+                      style={{ textAlign: 'center', marginLeft: '5px', marginRight: '5px' }}
                       cover={
                         areImages
-                          ? <img style={{ minHeight: '250px', objectFit: 'cover', maxWidth: '250px' }} alt="example" src={`https://media.graphcms.com/${group.banner.handle}`} onClick={() => { GroupSelect(group) }} />
-                          : <img style={{ minHeight: '250px', objectFit: 'cover', maxWidth: '250px' }} alt="example" src={`http://www.lombez-gers.com/photos-lombez/commun/noPicture.png`} onClick={() => { GroupSelect(group) }} />
+                          ? <img style={{ height: '250px', objectFit: 'cover' }} alt="example" src={`${areImages}`} onClick={() => { GroupSelect(group) }} />
+                          : <img style={{ height: '250px', objectFit: 'cover' }} alt="example" src={noImage} onClick={() => { GroupSelect(group) }} />
                       }
                     >
                       <Meta
                         onClick={() => { GroupSelect(group) }}
                         title={group.title}
                       />
-                      {group.dateStart ? <Moment date={group.dateStart} format="DD MMMM YYYY" /> : ''} - {group.dateEnd ? <Moment date={group.dateEnd} format="DD MMMM YYYY" /> : ''}
+                      <div className="group_name">
+                        {group.users.username} - {group.categories.title}
+                      </div>
+                      <div className="group_date">
+                        {group.updatedAt ? <Moment date={group.updatedAt} format="DD MMMM YYYY" /> : ''}
+                      </div>
                     </Card>
                   </Col>
                 );
               });
 
-              // RETURN THE CONTENT OF DASHBOARD
+              //-- RETURN THE CONTENT OF DASHBOARD --
               return (
-                <div style={{ padding: '0 50px' }}>
-                  <Content>
-                    <Row>
-                      {ColList}
+                <Content style={{ margin: '0 16px' }} >
+                  
+                  {/* Entête */}
+                  <Row>
+                    <Col xs={24}>
+                      <h1 style={{ margin: '0 auto', textAlign: 'center', width: '100%'}}>
+                        <div style={{ display: 'inline', marginRight: '0', float: 'none'}} className="animated fadeInLeft">EXTRA</div>
+                        <div style={{ display: 'inline', float: 'none'}} className="animated fadeInRight">SKEAR</div>
+                      </h1>
+                    </Col>
+                  </Row>
 
-                      <CreateGroup client={client} refetch={refetch}/>
-
-                    </Row>
-                  </Content>
-                </div>
+                  {/* Last Cards */}
+                  <Row>
+                    <Col xs={24}>
+                      <h2>
+                        <div className="animated fadeInLeft">Derniers</div>
+                        <div className="animated fadeInRight">Documentations publiés</div>
+                      </h2>
+                    </Col>
+                    {ColList}
+                    {/*<CreateGroup client={client} refetch={refetch}/>*/}
+                  </Row>
+                  
+                  {/* TODO LISTE */}
+                  <Todo />
+                  
+                  {/* Configurations */}
+                  <Configurations />
+                </Content>
               );
 
             }}
